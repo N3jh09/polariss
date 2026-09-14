@@ -1,0 +1,46 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import BaseLayout from "../components/blogLittle.astro";
+
+import Layout from "../components/global.astro";
+import Nav from "../components/nav.astro";
+import Little from "../components/blogLittle.astro";
+
+const posts = Object.values(
+    import.meta.glob("../content/blog/sample*.md", {
+        eager: true,
+    }),
+);
+
+const options: Intl.DateTimeFormatOptions = {
+    month: "long", // Use 'short' for abbreviated (e.g., Oct) or 'numeric' for numbers
+    day: "numeric",
+};
+---
+
+<!doctype html>
+<html>
+    <head>
+        <Layout title="Blogs and News" />
+    </head>
+    <body>
+        <Nav />
+        <div class="container-fluid">
+            {
+                posts.map((i) => (
+                    <Little>
+                        <h3>{i.frontmatter.title}</h3>
+                        {i.frontmatter.desc}
+                        <p style="color: #6b6b6b">
+                            {new Date(i.frontmatter.pubDate).toLocaleString(
+                                "en-US",
+                                options,
+                            )}
+                            , by {i.frontmatter.author}
+                        </p>
+                    </Little>
+                ))
+            }
+        </div>
+    </body>
+</html>

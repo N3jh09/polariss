@@ -1,0 +1,42 @@
+---
+import Layout from "../../components/global.astro";
+import Nav from "../../components/nav.astro";
+---
+
+<!doctype html>
+<html>
+    <head>
+        <Layout title="Make a Blog" />
+        <style is:global>
+            /* Style the toolbar specifically */
+            .ql-toolbar.ql-snow {
+                background-color: #ffffff !important;
+                border-bottom: 1px solid #ccc;
+            }
+
+            /* Style the text container */
+            .ql-container.ql-snow {
+                background-color: #ffffff !important;
+            }
+        </style>
+    </head>
+    <body>
+        <Nav />
+
+        <div id="editor">Test</div>
+    </body><script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"
+    ></script>
+    <script>
+        import Quill from "quill";
+        import "quill/dist/quill.snow.css";
+
+        const toolboxOptions = ["link", "image"];
+
+        const quill = new Quill("#editor", {
+            modules: {
+                toolbar: toolboxOptions,
+            },
+            theme: "snow",
+        });
+    </script>
+</html>
