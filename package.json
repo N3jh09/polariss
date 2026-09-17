@@ -8,18 +8,22 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "astro build && wrangler dev",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^14.3.2",
+    "@octokit/rest": "^22.0.1",
     "astro": "^7.3.2",
     "quill": "^2.0.3"
   },
   "allowScripts": {
-    "esbuild": true
+    "esbuild": true,
+    "workerd@1.20260916.1": true
   },
   "devDependencies": {
     "concurrently": "^10.0.5",
-    "decap-server": "^3.11.2"
+    "decap-server": "^3.11.2",
+    "wrangler": "^4.133.0"
   }
 }

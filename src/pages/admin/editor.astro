@@ -23,20 +23,175 @@ import Nav from "../../components/nav.astro";
     <body>
         <Nav />
 
-        <div id="editor">Test</div>
-    </body><script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"
+        <div class="editor-container">
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input
+                    type="text"
+                    id="title"
+                    placeholder="My Awesome Post"
+                    required
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="author">Author</label>
+                <input
+                    type="text"
+                    id="author"
+                    placeholder="Jane Doe"
+                    required
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea
+                    id="description"
+                    placeholder="A short summary of the post..."
+                    rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Body</label>
+                <div id="editor"></div>
+            </div>
+
+            <button id="publish-btn" type="button">Publish to GitHub</button>
+            <p id="status-msg"></p>
+        </div>
+    </body><script is:inline src="https://unpkg.com/turndown/dist/turndown.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"
     ></script>
     <script>
+        declare const TurndownService: any;
         import Quill from "quill";
         import "quill/dist/quill.snow.css";
 
-        const toolboxOptions = ["link", "image"];
+        const toolbarOptions = ["link", "image"];
 
+        const turndownService = new TurndownService();
         const quill = new Quill("#editor", {
             modules: {
-                toolbar: toolboxOptions,
+                toolbar: toolbarOptions,
             },
             theme: "snow",
         });
+
+        const publishBtn = document.getElementById("publish-btn");
+        const statusMsg = document.getElementById("status-msg");
+
+        // Slug generator helper
+        function generateSlug(title: string, dateStr: string): string {
+            const cleanTitle = title
+                .toLowerCase()
+                .trim()
+                .replace(/[^\w\s-]/g, "") // Remove special characters
+                .replace(/\s+/g, "-"); // Replace spaces with '-'
+
+            return `${cleanTitle}-${dateStr}`;
+        }
+
+        publishBtn?.addEventListener("click", async () => {
+            if (!statusMsg) return;
+
+            const title = (document.getElementById("title") as HTMLInputElement)
+                .value;
+            const author = (
+                document.getElementById("author") as HTMLInputElement
+            ).value;
+            const description = (
+                document.getElementById("description") as HTMLTextAreaElement
+            ).value;
+
+            if (!title || !author) {
+                statusMsg.innerText =
+                    "Please provide both a Title and an Author.";
+                return;
+            }
+
+            statusMsg.innerText = "Publishing...";
+
+            // 1. Auto-generate Date (YYYY-MM-DD)
+            const now = new Date();
+            const pubDate = now.toISOString().split("T")[0];
+
+            // 2. Auto-generate Slug (title-formatted-YYYY-MM-DD)
+            const slug = generateSlug(title, pubDate);
+
+            // 3. Convert Quill HTML to Markdown
+            const bodyMarkdown = turndownService.turndown(quill.root.innerHTML);
+
+            // 4. Construct Markdown with Frontmatter YAML
+            const fullMarkdown = `---
+title: "${title.replace(/"/g, '\\"')}"
+author: "${author.replace(/"/g, '\\"')}"
+pubDate: "${pubDate}"
+slug: "${slug}"
+description: "${description.replace(/"/g, '\\"')}"
+---
+
+${bodyMarkdown}`;
+
+            // 5. Send payload to API endpoint
+            try {
+                const response = await fetch("/api/save-github", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        slug,
+                        content: fullMarkdown,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusMsg.innerText = `Published successfully! File: ${slug}.md`;
+                } else {
+                    statusMsg.innerText = `Error: ${data.message}`;
+                }
+            } catch (err) {
+                statusMsg.innerText =
+                    "Network error while attempting to publish.";
+            }
+        });
     </script>
 </html>
+
+<style>
+    .editor-container {
+        max-width: 700px;
+        margin: 2rem auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    input,
+    textarea {
+        padding: 0.6rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    #editor {
+        height: 300px;
+        background: #fff;
+    }
+    button {
+        padding: 0.8rem;
+        background-color: #10b981;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>
