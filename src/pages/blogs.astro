@@ -1,16 +1,11 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
-import BaseLayout from "../components/blogLittle.astro";
 
 import Layout from "../components/global.astro";
 import Nav from "../components/nav.astro";
 import Little from "../components/blogLittle.astro";
 
-const posts = Object.values(
-    import.meta.glob("../content/blog/sample*.md", {
-        eager: true,
-    }),
-);
+const posts = await getCollection("blog");
 
 const options: Intl.DateTimeFormatOptions = {
     month: "long", // Use 'short' for abbreviated (e.g., Oct) or 'numeric' for numbers
@@ -29,14 +24,17 @@ const options: Intl.DateTimeFormatOptions = {
             {
                 posts.map((i) => (
                     <Little>
-                        <h3>{i.frontmatter.title}</h3>
-                        {i.frontmatter.desc}
+                        <a href={`/blog/${i.id}`}>
+                            <h3>{i.data.title}</h3>
+                        </a>
+                        {i.data.desc}
                         <p style="color: #6b6b6b">
-                            {new Date(i.frontmatter.pubDate).toLocaleString(
-                                "en-US",
-                                options,
-                            )}
-                            , by {i.frontmatter.author}
+                            {new Date(i.data.pubDate).toLocaleString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                            })}
+                            , by {i.data.author}
                         </p>
                     </Little>
                 ))
