@@ -1,7 +1,7 @@
 ---
 title: "Waving Guy"
 author: "Karma K"
-pubDate: "2026-09-17"
+pubDate: 2026-09-17
 slug: "waving-guy-2026-09-17"
 description: "guy waves at strangers"
 ---
