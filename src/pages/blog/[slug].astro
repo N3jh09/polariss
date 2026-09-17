@@ -2,24 +2,21 @@
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import BaseLayout from "../../layouts/blogLayout.astro";
 
-import Nav from "../../components/nav.astro";
+export const prerender = true; // <--- Critical for Cloudflare Workers when using getStaticPaths
+
+export async function getStaticPaths() {
+    const posts = await getCollection("blog");
+    return posts.map((post: CollectionEntry<"blog">) => ({
+        params: { slug: post.id },
+        props: { post },
+    }));
+}
 
 interface Props {
     post: CollectionEntry<"blog">;
 }
 
-// src/pages/blog/[slug].astro
-export async function getStaticPaths() {
-    const posts = await getCollection("blog");
-    return posts.map((post: CollectionEntry<"blog">) => ({
-        params: { slug: post.id.replace(/\.md$/, "") },
-        props: { post },
-    }));
-}
-
 const { post } = Astro.props;
-
-// Use the render() helper function instead of post.render()
 const { Content } = await render(post);
 ---
 
