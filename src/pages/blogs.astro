@@ -24,7 +24,7 @@ const options: Intl.DateTimeFormatOptions = {
             {
                 posts.map((i) => (
                     <Little>
-                        <a href={`/blog/${i.data.slug}`}>
+                        <a href={`/blog/${i.id.replace(/\.md$/, "")}`}>
                             <h3>{i.data.title}</h3>
                         </a>
                         {i.data.desc}

@@ -8,10 +8,11 @@ interface Props {
     post: CollectionEntry<"blog">;
 }
 
+// src/pages/blog/[slug].astro
 export async function getStaticPaths() {
     const posts = await getCollection("blog");
     return posts.map((post: CollectionEntry<"blog">) => ({
-        params: { slug: post.data.slug },
+        params: { slug: post.id.replace(/\.md$/, "") },
         props: { post },
     }));
 }
