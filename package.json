@@ -22,6 +22,7 @@
     "workerd@1.20260916.1": true
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260917.1",
     "concurrently": "^10.0.5",
     "decap-server": "^3.11.2",
     "wrangler": "^4.133.0"

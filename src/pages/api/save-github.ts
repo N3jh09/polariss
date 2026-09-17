@@ -1,16 +1,16 @@
 // src/pages/api/save-github.ts
 import type { APIRoute } from 'astro';
 import { Octokit } from '@octokit/rest';
+import { env } from 'cloudflare:workers'; // ✅ Import native Cloudflare env binding
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
     try {
-        // 1. Resolve environment variables with Cloudflare fallback
-        const cfEnv = (locals as any)?.runtime?.env || {};
-        const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN || cfEnv.GITHUB_TOKEN;
-        const GITHUB_REPO = import.meta.env.GITHUB_REPO || cfEnv.GITHUB_REPO;
-        const GITHUB_BRANCH = import.meta.env.GITHUB_BRANCH || cfEnv.GITHUB_BRANCH || 'main';
+        // 1. Resolve environment variables natively for Astro v6 / Cloudflare
+        const GITHUB_TOKEN = (env as any).GITHUB_TOKEN || import.meta.env.GITHUB_TOKEN;
+        const GITHUB_REPO = (env as any).GITHUB_REPO || import.meta.env.GITHUB_REPO;
+        const GITHUB_BRANCH = (env as any).GITHUB_BRANCH || import.meta.env.GITHUB_BRANCH || 'main';
 
-        const { slug, content } = await request.json();
+        const { slug, content } = (await request.json()) as { slug: string; content: string };
 
         if (!slug || !content) {
             return new Response(
@@ -30,7 +30,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         const [owner, repo] = GITHUB_REPO.split('/');
         const filePath = `src/content/blog/${slug}.md`;
 
-        // 2. Check if file exists to fetch SHA for updates
+        // 2. Fetch SHA if file exists
         let fileSha: string | undefined;
         try {
             const existingFile = await octokit.rest.repos.getContent({
@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
             if (error.status !== 404) throw error;
         }
 
-        // 3. Commit to GitHub
+        // 3. Commit file
         const result = await octokit.rest.repos.createOrUpdateFileContents({
             owner,
             repo,
