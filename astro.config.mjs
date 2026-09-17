@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-checks
 import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
