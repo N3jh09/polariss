@@ -4,6 +4,12 @@ import { Octokit } from '@octokit/rest';
 
 export const POST: APIRoute = async ({ request, locals }) => {
     try {
+        // 1. Resolve environment variables with Cloudflare fallback
+        const cfEnv = (locals as any)?.runtime?.env || {};
+        const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN || cfEnv.GITHUB_TOKEN;
+        const GITHUB_REPO = import.meta.env.GITHUB_REPO || cfEnv.GITHUB_REPO;
+        const GITHUB_BRANCH = import.meta.env.GITHUB_BRANCH || cfEnv.GITHUB_BRANCH || 'main';
+
         const { slug, content } = await request.json();
 
         if (!slug || !content) {
@@ -12,11 +18,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
                 { status: 400, headers: { 'Content-Type': 'application/json' } }
             );
         }
-
-        // Access env variables in Cloudflare runtime
-        const GITHUB_TOKEN = import.meta.env.GITHUB_TOKEN;
-        const GITHUB_REPO = import.meta.env.GITHUB_REPO; // Format: "owner/repo"
-        const GITHUB_BRANCH = import.meta.env.GITHUB_BRANCH || 'main';
 
         if (!GITHUB_TOKEN || !GITHUB_REPO) {
             return new Response(
@@ -27,9 +28,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
         const octokit = new Octokit({ auth: GITHUB_TOKEN });
         const [owner, repo] = GITHUB_REPO.split('/');
-        const filePath = `src/content/blog/${slug}.md`; // Adjust target directory path as needed
+        const filePath = `src/content/blog/${slug}.md`;
 
-        // Check if file exists to update SHA (prevents collision errors)
+        // 2. Check if file exists to fetch SHA for updates
         let fileSha: string | undefined;
         try {
             const existingFile = await octokit.rest.repos.getContent({
@@ -46,13 +47,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
             if (error.status !== 404) throw error;
         }
 
-        // Commit file via GitHub REST API
+        // 3. Commit to GitHub
         const result = await octokit.rest.repos.createOrUpdateFileContents({
             owner,
             repo,
             path: filePath,
             message: `content: publish ${slug}.md`,
-            content: btoa(unescape(encodeURIComponent(content))), // Cloudflare Worker friendly Base64 encoding
+            content: btoa(unescape(encodeURIComponent(content))),
             branch: GITHUB_BRANCH,
             sha: fileSha,
         });
@@ -70,4 +71,4 @@ export const POST: APIRoute = async ({ request, locals }) => {
             { status: 500, headers: { 'Content-Type': 'application/json' } }
         );
     }
-};
+}; s
